@@ -6,6 +6,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// este Doc style ayuda a obtener el tamano de la pantalla
+var docStyle = lipgloss.NewStyle().Width(150).
+	Height(20).
+	Margin(1, 2)
+
 func NewMainMenu() *Model {
 	items := []list.Item{
 		Item{Tit: "Jugar", Desc: "Citas famosas sacadas aleatoriamente de internet"},
@@ -17,8 +22,6 @@ func NewMainMenu() *Model {
 	m.List.Title = "Menu Principal"
 	return &m
 }
-
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
 type Item struct {
 	Tit, Desc string
@@ -57,6 +60,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
 		m.List.SetSize(msg.Width-h, msg.Height-v)
+		m.Game.outputArea.SetWidth(msg.Width - h)
 	}
 
 	if m.Playing {
@@ -69,15 +73,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-    // si el juego acaba de empezar
+	// si no se esta jugando
 	if !m.Playing {
 		return docStyle.Render(m.List.View())
 	}
-    // si ya se termino de jugar
-    if m.Playing && m.Game.Done {
-        m.Playing = false
-        m.Game.Done = false
+	// si ya se termino de jugar
+	if m.Playing && m.Game.Done {
+		m.Playing = false
+		m.Game.Done = false
 		return docStyle.Render(m.List.View())
-    }
-	return m.Game.View()
+	}
+	return docStyle.Render(m.Game.View())
 }

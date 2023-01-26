@@ -53,7 +53,6 @@ func (m example) View() string {
 // es la funcion que recibe los inputs y se encarga de actualizar la vista
 func (m example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	// Is it a key press?
 	case tea.KeyMsg:
 
@@ -91,4 +90,7 @@ func (m example) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Return the updated model to the Bubble Tea runtime for processing.
 	// Note that we're not returning a command.
 	return m, nil
+}
+
+func NuevoEjemplo() {
 }

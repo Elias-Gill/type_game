@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
+	// "github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/elias-gill/type_game/utils"
@@ -38,34 +39,21 @@ type Typer struct {
 	errors        int
 	timer         Timer
 	Done          bool
+	outputArea    textarea.Model
 }
 
 // retorna una nueva instancia del Typer (juego de escribir)
 func NewTyper() *Typer {
-	// generar un nuevo TextArea
-	ta := textarea.New()
-	ta.Placeholder = ""
-	ta.Focus()
-
-	// estilo
-	ta.Prompt = doneStyle.Render("\t\t┃ ")
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle() // vaciar el estilo por defecto
-	ta.ShowLineNumbers = false
-
-	// presets generales
-	ta.SetWidth(50)
-	ta.SetHeight(3)
-	ta.CharLimit = 280
-	ta.KeyMap.InsertNewline.SetEnabled(false)
-
 	// TODO: change behavior to not panic when the request is invalid
 	cita, err := utils.NuevaCita()
 	if err != nil {
 		panic("bad request")
 	}
+
 	t := Typer{
 		Done:          false,
-		textArea:      ta,
+		textArea:      newTextArea(),
+		outputArea:    newOutputArea(),
 		cita:          cita,
 		coloredOutput: strings.Split(cita.Content, " "),
 	}
@@ -77,10 +65,10 @@ func (t Typer) Init() tea.Cmd {
 }
 
 func (t Typer) View() string {
-	var s = "\n\n\t\t"
+	s := "\n\n\t\t"
 	// fomatear cita
 	for i, v := range t.coloredOutput {
-		if i%20 == 0 {
+		if i%docStyle.GetHorizontalFrameSize() == 0 {
 			s += "\n\t\t"
 		}
 		s += v + " "
@@ -103,8 +91,9 @@ func (t Typer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return t, tea.Quit
 
-		case " ": // pasar a la siguiente palabra
-			if t.pos == len(t.coloredOutput)-1 {
+		case " ":
+			// terminar el juego cuando se llega a la ultima palabra
+			if t.pos == len(t.cita.Splited)-1 {
 				t.Done = true
 				return t, nil
 			}
@@ -158,4 +147,40 @@ func (t Typer) colorearStrings() {
 		}
 	}
 	t.coloredOutput[t.pos] = s
+}
+
+func newTextArea() textarea.Model {
+	// generar un nuevo TextArea
+	ta := textarea.New()
+	ta.Placeholder = ""
+	ta.Focus()
+
+	// estilo
+	ta.Prompt = doneStyle.Render("\t\t┃ ")
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle() // vaciar el estilo por defecto
+	ta.ShowLineNumbers = false
+
+	// presets generales
+	ta.SetWidth(50)
+	ta.SetHeight(3)
+	ta.CharLimit = 280
+	ta.KeyMap.InsertNewline.SetEnabled(false)
+	return ta
+}
+
+// funcion que genera el nuevo componente donde se coloca el output
+func newOutputArea() textarea.Model {
+	// generar un nuevo TextArea
+	ta := textarea.New()
+	ta.Placeholder = ""
+
+	// estilo
+	ta.Prompt = doneStyle.Render("\t\t┃ ")
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle() // vaciar el estilo por defecto
+	ta.ShowLineNumbers = false
+
+	// presets generales
+	ta.SetWidth(120)
+	ta.SetHeight(5)
+	return ta
 }
