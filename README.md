@@ -7,7 +7,10 @@ Para instalarlo tanto en Windows como en Linux debes de tener instalado el lengu
 
 Luego ingresa el siguiente comando desde una terminal:
 ```
-go install -ldflags -H=windowsgui github.com/elias-gill/type_game@latest
+go install github.com/elias-gill/type_game@latest
 ```
 
-Eso es todo, ya puedes jugar y disfrutar de este esperpento de programa
+Eso es todo, ya puedes jugar y disfrutar de este esperpento de programa corriendo el comando:
+```
+type_game.exe
+```
