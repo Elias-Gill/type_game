@@ -9,11 +9,8 @@ import (
 )
 
 func main() {
-	m := components.NewApp()
-	// n := components.NewTyper()
-
+	m := components.NewApp(100)
 	p := tea.NewProgram(m, tea.WithAltScreen())
-
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

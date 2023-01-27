@@ -37,10 +37,8 @@ type Typer struct {
 	pos           int // posicion de la palabra en la cita
 	asserts       int
 	errors        int
-	timer         Timer
-	OutputSize    int
+	outputSize    int
 	Done          bool
-	outputArea    textarea.Model
 }
 
 // retorna una nueva instancia del Typer (juego de escribir)
@@ -54,8 +52,7 @@ func NewTyper(width int, s ...string) Typer {
 	t := Typer{
 		Done:          done,
 		textArea:      newTextArea(),
-		outputArea:    newOutputArea(),
-		OutputSize:    width,
+		outputSize:    width, // largo de la pantalla en caracteres
 		cita:          cita,
 		coloredOutput: strings.Split(cita.Content, " "),
 	}
@@ -63,14 +60,16 @@ func NewTyper(width int, s ...string) Typer {
 }
 
 func (t Typer) Init() tea.Cmd {
-	return t.timer.stopwatch.Start()
+	return nil
 }
 
 func (t Typer) View() string {
 	s := "\n\n\t\t"
 	// fomatear cita
 	for i, v := range t.coloredOutput {
-		if i%int(t.OutputSize/10) == 0 {
+        /* Cada palabra contiene en promedio 10 letras (ingles) entonces se calcula la cantitdad de 
+        palabras que entra en un outputSize y cada multiplo se agrega un salto de linea */
+		if i%int(t.outputSize/8) == 0 {
 			s += "\n\t\t"
 		}
 		s += v + " "
@@ -78,56 +77,67 @@ func (t Typer) View() string {
 	s += authorStyle.Render("\n\t\t- '" + t.cita.Author + "'")
 	s += "\n\n"
 	s += t.textArea.View()
-	s += t.timer.View()
 	return s
 }
 
 // Se encarga de actualizar el texto en pantalla y de colorear conforme el usuario escribe
 func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
+
+	// handle when the window is resized
+	case tea.WindowSizeMsg:
+		h, _ := docStyle.GetFrameSize()
+		t.outputSize = msg.Width - h
+		return t, nil
+
 	case tea.KeyMsg:
+		// teclas especiales
 		switch msg.String() {
-		// ver si no se presiono ctrl+c
-		case "ctrl+c":
+		case "ctrl+c": // salir del programa
 			return t, tea.Quit
 
-		case "esc":
+		case "esc": // salir al menu
 			t.Done = true
-			return t, nil
+			return t, tea.ClearScreen
 
-		case " ":
-			// terminar el juego cuando se llega a la ultima palabra
-			if t.pos == len(t.cita.Splited)-1 {
-				t.Done = true
-				return t, nil
-			}
-
-			// pintar las palabras que estan bien y las que estan mal
-			if t.cita.Splited[t.pos] == t.textArea.Value() {
-				t.coloredOutput[t.pos] = goodStyle.Render(t.cita.Splited[t.pos])
-				t.asserts++
-			} else {
-				t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
-				t.errors++
-			}
-			t.textArea.Reset()
-			t.pos++
-			return t, nil
+		case " ": // colorear y pasar a la siguiente palabra
+			return t.colorearOutput()
 		}
 	}
 
-	// actualizar el textArea
+	// actualizar el textArea con un input normal
+	var cmd tea.Cmd
 	t.textArea, cmd = t.textArea.Update(msg)
 	// colorear las letras de la palabra actual
-	t.colorearStrings()
+	t.colorearPalActual()
 	return t, cmd
+}
+
+/* Colorea el input de las palabras ya terminadas (una palabra se considera terminada cuando se preciona
+la tecla espacio) */
+func (t Typer) colorearOutput() (Typer, tea.Cmd) {
+	// terminar el juego cuando se llega a la ultima palabra
+	if t.pos == len(t.cita.Splited)-1 {
+		t.Done = true
+		return t, nil
+	}
+
+	// pintar las palabras que estan bien y las que estan mal
+	if t.cita.Splited[t.pos] == t.textArea.Value() {
+		t.coloredOutput[t.pos] = goodStyle.Render(t.cita.Splited[t.pos])
+		t.asserts++
+	} else {
+		t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
+		t.errors++
+	}
+	t.textArea.Reset()
+	t.pos++
+	return t, nil
 }
 
 /* colorea la palabra que se esta escribiendo actualmente letra por letra dependiendo de lo que el usuario
 escribe */
-func (t Typer) colorearStrings() {
+func (t Typer) colorearPalActual() {
 	text := t.textArea.Value()
 	s := ""
 	palActual := t.cita.Splited[t.pos]
@@ -172,22 +182,5 @@ func newTextArea() textarea.Model {
 	ta.SetHeight(3)
 	ta.CharLimit = 280
 	ta.KeyMap.InsertNewline.SetEnabled(false)
-	return ta
-}
-
-// funcion que genera el nuevo componente donde se coloca el output
-func newOutputArea() textarea.Model {
-	// generar un nuevo TextArea
-	ta := textarea.New()
-	ta.Placeholder = ""
-
-	// estilo
-	ta.Prompt = doneStyle.Render("\t\t┃ ")
-	ta.FocusedStyle.CursorLine = lipgloss.NewStyle() // vaciar el estilo por defecto
-	ta.ShowLineNumbers = false
-
-	// presets generales
-	ta.SetWidth(120)
-	ta.SetHeight(5)
 	return ta
 }
