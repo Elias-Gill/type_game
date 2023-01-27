@@ -16,7 +16,11 @@ type Cuote struct {
 }
 
 // Retorna una nueva cita aleatoria de internet utilizando quotable
-func NuevaCita() (*Cuote, error) {
+func NuevaCita(s []string) (*Cuote, error) {
+	if s != nil {
+		return nuevaCitaLocal(s[0])
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -31,4 +35,8 @@ func NuevaCita() (*Cuote, error) {
 
 	body.Splited = strings.Split(body.Content, " ")
 	return &body, nil
+}
+
+func nuevaCitaLocal(name string) (*Cuote, error) {
+    return &Cuote{}, nil
 }

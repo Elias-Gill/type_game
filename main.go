@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	m := components.NewMainMenu()
+	m := components.NewApp()
 	// n := components.NewTyper()
 
 	p := tea.NewProgram(m, tea.WithAltScreen())

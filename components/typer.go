@@ -38,26 +38,28 @@ type Typer struct {
 	asserts       int
 	errors        int
 	timer         Timer
+	OutputSize    int
 	Done          bool
 	outputArea    textarea.Model
 }
 
 // retorna una nueva instancia del Typer (juego de escribir)
-func NewTyper() *Typer {
-	// TODO: change behavior to not panic when the request is invalid
-	cita, err := utils.NuevaCita()
+func NewTyper(width int, s ...string) Typer {
+	done := false
+	cita, err := utils.NuevaCita(s)
 	if err != nil {
-		panic("bad request")
+		done = true
 	}
 
 	t := Typer{
-		Done:          false,
+		Done:          done,
 		textArea:      newTextArea(),
 		outputArea:    newOutputArea(),
+		OutputSize:    width,
 		cita:          cita,
 		coloredOutput: strings.Split(cita.Content, " "),
 	}
-	return &t
+	return t
 }
 
 func (t Typer) Init() tea.Cmd {
@@ -68,7 +70,7 @@ func (t Typer) View() string {
 	s := "\n\n\t\t"
 	// fomatear cita
 	for i, v := range t.coloredOutput {
-		if i%docStyle.GetHorizontalFrameSize() == 0 {
+		if i%int(t.OutputSize/10) == 0 {
 			s += "\n\t\t"
 		}
 		s += v + " "
@@ -81,7 +83,7 @@ func (t Typer) View() string {
 }
 
 // Se encarga de actualizar el texto en pantalla y de colorear conforme el usuario escribe
-func (t Typer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -91,12 +93,17 @@ func (t Typer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return t, tea.Quit
 
+		case "esc":
+			t.Done = true
+			return t, nil
+
 		case " ":
 			// terminar el juego cuando se llega a la ultima palabra
 			if t.pos == len(t.cita.Splited)-1 {
 				t.Done = true
 				return t, nil
 			}
+
 			// pintar las palabras que estan bien y las que estan mal
 			if t.cita.Splited[t.pos] == t.textArea.Value() {
 				t.coloredOutput[t.pos] = goodStyle.Render(t.cita.Splited[t.pos])
@@ -113,7 +120,7 @@ func (t Typer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// actualizar el textArea
 	t.textArea, cmd = t.textArea.Update(msg)
-	// colorear mientras se escribe
+	// colorear las letras de la palabra actual
 	t.colorearStrings()
 	return t, cmd
 }

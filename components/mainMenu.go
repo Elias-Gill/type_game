@@ -6,82 +6,49 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// TODO: poner en otro archivo estas cosas
 // este Doc style ayuda a obtener el tamano de la pantalla
-var docStyle = lipgloss.NewStyle().Width(150).
+var docStyle = lipgloss.NewStyle().Width(200).
 	Height(20).
 	Margin(1, 2)
 
-func NewMainMenu() *Model {
+func NewMainMenu() mainMenu {
 	items := []list.Item{
-		Item{Tit: "Jugar", Desc: "Citas famosas sacadas aleatoriamente de internet"},
-		Item{Tit: "Jugar offline", Desc: "Citas sacadas del banco de citas local"},
-		Item{Tit: "Personalizado", Desc: "Escribe tu propia cita personalizada y guardala en el banco de citas local"},
+		Item{Action: "jugar", Tit: "Jugar", Desc: "Citas famosas sacadas aleatoriamente de internet"},
+		Item{Action: "offline", Tit: "Jugar offline", Desc: "Citas sacadas del banco de citas local"},
+		Item{Action: "cargar", Tit: "Personalizado", Desc: "Escribe tu propia cita personalizada y guardala en el banco de citas local"},
 	}
 
-	m := Model{List: list.New(items, list.NewDefaultDelegate(), 0, 0), Playing: false, Game: NewTyper()}
+	m := mainMenu{List: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 	m.List.Title = "Menu Principal"
-	return &m
+	return m
 }
 
 type Item struct {
-	Tit, Desc string
+	Tit, Desc, Action string
 }
 
 func (i Item) Title() string       { return i.Tit }
 func (i Item) Description() string { return i.Desc }
-func (i Item) FilterValue() string { return i.Tit }
+func (i Item) FilterValue() string { return i.Action }
 
-type Model struct {
-	List    list.Model
-	Playing bool
-	Game    *Typer
+type mainMenu struct {
+	List list.Model
 }
 
-func (m Model) Init() tea.Cmd {
+// INFO: no se utiliza
+func (m mainMenu) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
-			println("see you latter")
-			return m, tea.Quit
-		}
-
-		if msg.String() == "enter" {
-			if !m.Playing {
-				m.Playing = true
-			}
-			return m, nil
-		}
-
-		// resize of the window
-	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.List.SetSize(msg.Width-h, msg.Height-v)
-		m.Game.outputArea.SetWidth(msg.Width - h)
-	}
-
-	if m.Playing {
-		return m.Game.Update(msg)
-	}
-
+// actualizar el modelo
+func (m mainMenu) Update(msg tea.Msg) (mainMenu, tea.Cmd) {
 	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
 
-func (m Model) View() string {
-	// si no se esta jugando
-	if !m.Playing {
-		return docStyle.Render(m.List.View())
-	}
-	// si ya se termino de jugar
-	if m.Playing && m.Game.Done {
-		m.Playing = false
-		m.Game.Done = false
-		return docStyle.Render(m.List.View())
-	}
-	return docStyle.Render(m.Game.View())
+//mostrar menu de seleccion
+func (m mainMenu) View() string {
+	return m.List.View()
 }
