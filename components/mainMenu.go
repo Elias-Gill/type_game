@@ -3,14 +3,7 @@ package components
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
-
-// TODO: poner en otro archivo estas cosas
-// este Doc style ayuda a obtener el tamano de la pantalla
-var docStyle = lipgloss.NewStyle().Width(200).
-	Height(20).
-	Margin(1, 2)
 
 func NewMainMenu() mainMenu {
 	items := []list.Item{

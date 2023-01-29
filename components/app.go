@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// estados en los que se puede encontrar el juego
 const (
+	// estados de la aplicacion
 	menu = iota
 	inGame
 	resumen
@@ -37,16 +37,16 @@ func (m App) Init() tea.Cmd {
 }
 
 func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// si el juego termina reiniciar los valores y mostrar el menu principal
-	if a.Mode == inGame && a.Game.Done {
-		a.Game.Done = false
-		a.Mode = menu
-		return a, nil
-	}
-
-	// actualizar el juego si es que se esta jugando
 	var cmd tea.Cmd
+    // cuando se encuentra inGame, delegar al typer
 	if a.Mode == inGame {
+		// si el juego termina reiniciar los valores y mostrar el menu principal
+		if a.Game.Done {
+			a.Game.Done = false
+			a.Mode = menu
+			return a, nil
+		}
+		// actualizar el juego
 		a.Game, cmd = a.Game.Update(msg)
 		return a, cmd
 	}
@@ -61,9 +61,9 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, tea.Quit
 		}
 
-		// TODO: probablemente pasar a iota con consts
+		// TODO: revisar probablemente
 		if msg.String() == "enter" {
-			// ver cual selecciono el usuario
+			// ver cual opcion selecciono el usuario
 			switch a.Menu.List.SelectedItem().FilterValue() {
 			case "jugar": // crear una nueva instancia del typer
 				a.Mode = inGame
@@ -75,9 +75,11 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.Game = NewTyper(a.appWidth, "")
 
 			case "cargar":
+				// TODO: la cargar de nuevas palabras
 				return a, tea.Quit
 			}
 		}
+		// actualizar el menu
 		a.Menu, cmd = a.Menu.Update(msg)
 
 	// handle when the window is resized
