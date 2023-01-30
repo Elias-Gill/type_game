@@ -1,8 +1,6 @@
 package components
 
 import (
-	"time"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -38,7 +36,7 @@ func (m App) Init() tea.Cmd {
 
 func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-    // cuando se encuentra inGame, delegar al typer
+	// cuando se encuentra inGame, delegar al typer
 	if a.Mode == inGame {
 		// si el juego termina reiniciar los valores y mostrar el menu principal
 		if a.Game.Done {
@@ -55,39 +53,41 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// handle when a key is pressed
 	case tea.KeyMsg:
-		if msg.String() == "ctrl+c" {
-			println("See you latter !!!")
-			time.Sleep(time.Second * 1)
-			return a, tea.Quit
-		}
 
-		// TODO: revisar probablemente
+		// si se da enter en el menu
 		if msg.String() == "enter" {
 			// ver cual opcion selecciono el usuario
 			switch a.Menu.List.SelectedItem().FilterValue() {
 			case "jugar": // crear una nueva instancia del typer
 				a.Mode = inGame
 				a.Game = NewTyper(a.appWidth)
+				cmd = a.Game.Init()
+				return a, cmd
 
 			case "offline": // nuevo typer pero con el archivo local
 				// TODO: implementar los archivos locales
 				a.Mode = inGame
 				a.Game = NewTyper(a.appWidth, "")
+				cmd = a.Game.Init()
+				return a, cmd
 
 			case "cargar":
-				// TODO: la cargar de nuevas palabras
+				// TODO: implementar cargardor de palabras
 				return a, tea.Quit
 			}
 		}
-		// actualizar el menu
-		a.Menu, cmd = a.Menu.Update(msg)
 
 	// handle when the window is resized
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
 		a.Menu.List.SetSize(msg.Width-h, msg.Height-v)
 		a.appWidth = msg.Width
+		/* INFOD: no es necesario retornar. La unica manera de que llegue hasta este punto es que
+		   el juego se encuentre en el menu */
 	}
+
+	// actualizar el menu
+	a.Menu, cmd = a.Menu.Update(msg)
 	return a, cmd
 }
 

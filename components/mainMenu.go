@@ -1,6 +1,8 @@
 package components
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -36,12 +38,23 @@ func (m mainMenu) Init() tea.Cmd {
 
 // actualizar el modelo
 func (m mainMenu) Update(msg tea.Msg) (mainMenu, tea.Cmd) {
+	options := map[string]struct{}{"q": {}, "esc": {}, "ctrl+c": {}}
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		_, keyExit := options[msg.String()]
+		if keyExit {
+			println("See you latter !!!")
+			time.Sleep(time.Second * 1)
+			return m, tea.Quit
+		}
+	}
+
 	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
 	return m, cmd
 }
 
-//mostrar menu de seleccion
+// mostrar menu de seleccion
 func (m mainMenu) View() string {
 	return m.List.View()
 }

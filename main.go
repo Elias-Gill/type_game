@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	m := components.NewApp(100)
+    // instantiate
+    width := int(os.Stdout.Fd()) // window width
+	m := components.NewApp(width)
+
+    // run
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)

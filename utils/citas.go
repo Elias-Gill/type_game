@@ -38,5 +38,5 @@ func NuevaCita(s []string) (*Cuote, error) {
 }
 
 func nuevaCitaLocal(name string) (*Cuote, error) {
-    return &Cuote{}, nil
+	return &Cuote{Splited: []string{}, Content: ""}, nil
 }
