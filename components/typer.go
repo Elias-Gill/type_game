@@ -56,8 +56,8 @@ func (t Typer) View() string {
 	s := "\n\n\t\t"
 	// fomatear cita
 	for i, v := range t.coloredOutput {
-		/* Comoo promedio, cada palabra contendra 8 letras (ingles) entonces se calcula la cantitdad de
-		   palabras que caben en un outputSize y se agregan saltos de linea */
+		/* Cada palabra contiene en promedio 10 letras (ingles) entonces se calcula la cantitdad de
+		   palabras que entra en un outputSize y cada multiplo se agrega un salto de linea */
 		if i%int(t.outputSize/8) == 0 {
 			s += "\n\t\t"
 		}
@@ -85,6 +85,15 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 	case tea.KeyMsg:
 		// teclas especiales
 		switch msg.String() {
+		case "alt+backspace", "backspace", "ctrl+w": // volver una palabra atras
+			if len(t.textArea.Value()) == 0 && t.pos > 0 {
+				t.coloredOutput[t.pos] = t.cita.Splited[t.pos]
+				t.pos--
+				t.textArea.SetValue(t.cita.Splited[t.pos])
+				t.colorearPalActual()
+				return t, cmd
+			}
+
 		case "ctrl+c": // salir del programa
 			return t, tea.Quit
 
@@ -94,7 +103,7 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 			return t, tea.ClearScreen
 
 		case " ": // colorear y pasar a la siguiente palabra
-			return t.colorearOutput(), cmd
+			return t.colorearOutput(1), cmd
 		}
 	}
 
@@ -110,11 +119,11 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 
 la tecla espacio)
 */
-func (t Typer) colorearOutput() Typer {
+func (t Typer) colorearOutput(i int) Typer {
 	// terminar el juego cuando se llega a la ultima palabra
 	if t.pos == len(t.cita.Splited)-1 {
 		t.Done = true
-        t.timer.Stop()
+		t.timer.Stop()
 		return t
 	}
 
@@ -125,7 +134,7 @@ func (t Typer) colorearOutput() Typer {
 		t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
 	}
 	t.textArea.Reset()
-	t.pos++
+	t.pos += i
 	return t
 }
 
@@ -138,6 +147,11 @@ func (t Typer) colorearPalActual() {
 	text := t.textArea.Value()
 	s := ""
 	palActual := t.cita.Splited[t.pos]
+
+	if len(text) > len(palActual) {
+		t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
+		return
+	}
 
 	// pintar las letras de la palabra actual
 	for i := range palActual {
