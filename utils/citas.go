@@ -23,7 +23,7 @@ type cuotes struct {
 
 /* Dentro de S se envia el id de una cita contenidad localmente. Si el valor de s es nulo, entonces
 se genera una nueva cita de internet utilizando quotable. */
-func NuevaCitaOnline() ([]*Cuote, error) {
+func NuevaCitaOnline() (*Cuote, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func NuevaCitaOnline() ([]*Cuote, error) {
 	}
 
 	body.Splited = strings.Split(body.Content, " ")
-	return []*Cuote{&body}, nil
+	return &body, nil
 }
 
 // WARNING: CAMBIAR EL SISTEMA DE ARCHIVOS

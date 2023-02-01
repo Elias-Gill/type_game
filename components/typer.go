@@ -1,7 +1,6 @@
 package components
 
 import (
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/stopwatch"
@@ -14,10 +13,10 @@ import (
 // modelo basico del typer
 type Typer struct {
 	cita          *utils.Cuote
-	textArea      textarea.Model
 	timer         stopwatch.Model
-	timerOn       bool
+	textArea      textarea.Model
 	coloredOutput []string
+	userInputs    []string
 	pos           int // posicion de la palabra en la cita
 	outputSize    int
 	Done          bool
@@ -36,14 +35,20 @@ func NewTyper(width int, fraceId ...utils.Cuote) Typer {
 		done = true
 	}
 
+	// crear un array auxiliar con espacios en blanco
+	aux := []string{}
+	for i := 0; i < len(cita.Splited); i++ {
+		aux = append(aux, "")
+	}
+
 	return Typer{
 		Done:          done,
 		textArea:      newTextArea(),
 		timer:         stopwatch.NewWithInterval(time.Second),
-		timerOn:       false,
 		outputSize:    width, // window width
-		cita:          cita[0],
-		coloredOutput: strings.Split(cita[0].Content, " "),
+		cita:          cita,
+		coloredOutput: cita.Splited,
+		userInputs:    aux,
 	}
 }
 
@@ -91,7 +96,7 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 			if len(t.textArea.Value()) == 0 && t.pos > 0 {
 				t.coloredOutput[t.pos] = t.cita.Splited[t.pos]
 				t.pos--
-				t.textArea.SetValue(t.cita.Splited[t.pos])
+				t.textArea.SetValue(t.userInputs[t.pos])
 				t.colorearPalActual()
 				return t, cmd
 			}
@@ -105,7 +110,7 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 			return t, tea.ClearScreen
 
 		case " ": // colorear y pasar a la siguiente palabra
-			return t.colorearOutput(1), cmd
+			return t.colorearOutput(), cmd
 		}
 	}
 
@@ -120,7 +125,8 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 	Colorea el input de las palabras ya terminadas (una palabra se considera terminada cuando
 se preciona la tecla espacio)
 */
-func (t Typer) colorearOutput(i int) Typer {
+func (t Typer) colorearOutput() Typer {
+	t.userInputs[t.pos] = t.textArea.Value()
 	// terminar el juego cuando se llega a la ultima palabra
 	if t.pos == len(t.cita.Splited)-1 {
 		t.Done = true
@@ -135,7 +141,7 @@ func (t Typer) colorearOutput(i int) Typer {
 		t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
 	}
 	t.textArea.Reset()
-	t.pos += i
+	t.pos++
 	return t
 }
 
@@ -177,6 +183,7 @@ func (t Typer) colorearPalActual() {
 	t.coloredOutput[t.pos] = s
 }
 
+// funcion para crear un nuevo text area (donde el usuario escribe)
 func newTextArea() textarea.Model {
 	// generar un nuevo TextArea
 	ta := textarea.New()
