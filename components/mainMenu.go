@@ -28,7 +28,8 @@ func (i Item) Description() string { return i.Desc }
 func (i Item) FilterValue() string { return i.Action }
 
 type mainMenu struct {
-	List list.Model
+	List     list.Model
+	Selected bool
 }
 
 // INFO: no se utiliza
@@ -41,17 +42,27 @@ func (m mainMenu) Update(msg tea.Msg) (mainMenu, tea.Cmd) {
 	options := map[string]struct{}{"q": {}, "esc": {}, "ctrl+c": {}}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if msg.String() == "enter" {
+			m.Selected = true
+		}
+
+		// si la tecla precionada es una de las de salir
 		_, keyExit := options[msg.String()]
 		if keyExit {
 			println("See you latter !!!")
 			time.Sleep(time.Second * 1)
 			return m, tea.Quit
 		}
+
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.List.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	var cmd tea.Cmd
 	m.List, cmd = m.List.Update(msg)
 	return m, cmd
+
 }
 
 // mostrar menu de seleccion

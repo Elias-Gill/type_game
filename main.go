@@ -10,9 +10,7 @@ import (
 
 func main() {
     // instantiate
-    width := int(os.Stdout.Fd()) // window width
-	m := components.NewApp(width)
-
+	m := components.NewApp()
     // run
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

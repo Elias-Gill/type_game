@@ -12,32 +12,39 @@ const (
 )
 
 type App struct {
-	Quit     bool
-	Mode     int
-	Menu     mainMenu
-	Game     Typer
-	appWidth int
+	Quit      bool
+	Mode      int
+	Menu      mainMenu
+	Game      Typer
+	appWith   int
+	appHeight int
 }
 
-func NewApp(size int) App {
+func NewApp() App {
 	return App{
-		Quit:     false,
-		Mode:     menu,
-		Menu:     NewMainMenu(),
-		Game:     NewTyper(size),
-		appWidth: size,
+		Quit: false,
+		Mode: menu,
+		Menu: NewMainMenu(),
+		Game: Typer{},
 	}
 }
 
-// INFO: no se utiliza
 func (m App) Init() tea.Cmd {
 	return nil
 }
 
 func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// actualizar el tamano de la app
 	var cmd tea.Cmd
-	// cuando se encuentra inGame, delegar al typer
-	if a.Mode == inGame {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		a.appWith = msg.Width
+		a.appWith = msg.Height
+	}
+
+	// handle events
+	switch a.Mode {
+	case inGame: // el juego se encuentra corriendo
 		// si el juego termina reiniciar los valores y mostrar el menu principal
 		if a.Game.Done {
 			a.Game.Done = false
@@ -47,55 +54,55 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// actualizar el juego
 		a.Game, cmd = a.Game.Update(msg)
 		return a, cmd
-	}
 
-	// Filtrar y administrar las acciones cuando una tecla es oprimida
-	switch msg := msg.(type) {
-	// handle when a key is pressed
-	case tea.KeyMsg:
-
-		// si se da enter en el menu
-		if msg.String() == "enter" {
-			// ver cual opcion selecciono el usuario
-			switch a.Menu.List.SelectedItem().FilterValue() {
-			case "jugar": // crear una nueva instancia del typer
-				a.Mode = inGame
-				a.Game = NewTyper(a.appWidth)
-				cmd = a.Game.Init()
-				return a, cmd
-
-			case "offline": // nuevo typer pero con el archivo local
-				// TODO: implementar los archivos locales
-				a.Mode = inGame
-				a.Game = NewTyper(a.appWidth, "")
-				cmd = a.Game.Init()
-				return a, cmd
-
-			case "cargar":
-				// TODO: implementar cargardor de palabras
-				return a, tea.Quit
-			}
+	case menu: // actualizar el menu
+		a.Menu, cmd = a.Menu.Update(msg)
+		// si desde el menu se selecciono algo
+		if a.Menu.Selected {
+			return a.selectMode()
 		}
-
-	// handle when the window is resized
-	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		a.Menu.List.SetSize(msg.Width-h, msg.Height-v)
-		a.appWidth = msg.Width
-		/* INFOD: no es necesario retornar. La unica manera de que llegue hasta este punto es que
-		   el juego se encuentre en el menu */
+		return a, cmd
 	}
-
-	// actualizar el menu
-	a.Menu, cmd = a.Menu.Update(msg)
 	return a, cmd
 }
 
+// selecciona la vista dependiendo del estado de la aplicacion
 func (m App) View() string {
-	// si el juego continua entonces mostrar el juego
-	if m.Mode == inGame {
+	switch m.Mode {
+	case inGame: // mostrar juego
 		return docStyle.Render(m.Game.View())
+
+	case resumen: // mostrar juego
+		return docStyle.Render(m.Game.View())
+
+	default: // mostrar menu
+		return docStyle.Render(m.Menu.View())
 	}
-	// mostrar el menu principa
-	return docStyle.Render(m.Menu.View())
+}
+
+/* triggered when and option is selected in the main menu.
+Handles the App state and sets the correct mode */
+func (a App) selectMode() (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	// TODO: meter en funcion separada
+	a.Menu.Selected = false
+	// change game mode
+	switch a.Menu.List.SelectedItem().FilterValue() {
+	case "jugar": // crear una nueva instancia del typer
+		a.Mode = inGame
+		a.Game = NewTyper(a.appWith)
+		cmd = a.Game.Init()
+		return a, cmd
+
+	case "offline": // nuevo typer pero con el archivo local
+		// TODO: implementar los archivos locales
+		a.Mode = inGame
+		a.Game = NewTyper(a.appWith)
+		cmd = a.Game.Init()
+		return a, cmd
+
+	case "cargar":
+		return a, tea.Quit
+	}
+	return a, cmd
 }

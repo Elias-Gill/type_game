@@ -29,23 +29,22 @@ Retorna una nueva instancia del Typer (juego de escribir).
 El "fraceId" corresponde al identificador de la cita local ("id"). Si el valor proporcionado es nulo, entonces se retorna un typer con
 una cita sacada de internet.
 */
-func NewTyper(width int, fraceId ...string) Typer {
+func NewTyper(width int, fraceId ...utils.Cuote) Typer {
 	done := false
-	cita, err := utils.NuevaCita(fraceId)
+	cita, err := utils.NuevaCitaOnline()
 	if err != nil {
 		done = true
 	}
 
-	t := Typer{
+	return Typer{
 		Done:          done,
 		textArea:      newTextArea(),
 		timer:         stopwatch.NewWithInterval(time.Second),
 		timerOn:       false,
-		outputSize:    width, // largo de la pantalla en caracteres
-		cita:          cita,
-		coloredOutput: strings.Split(cita.Content, " "),
+		outputSize:    width, // window width
+		cita:          cita[0],
+		coloredOutput: strings.Split(cita[0].Content, " "),
 	}
-	return t
 }
 
 func (t Typer) Init() tea.Cmd {
@@ -58,7 +57,11 @@ func (t Typer) View() string {
 	for i, v := range t.coloredOutput {
 		/* Cada palabra contiene en promedio 10 letras (ingles) entonces se calcula la cantitdad de
 		   palabras que entra en un outputSize y cada multiplo se agrega un salto de linea */
-		if i%int(t.outputSize/8) == 0 {
+		size := int(t.outputSize / 8)
+		if size == 0 {
+			size = 1
+		}
+		if i%size == 0 {
 			s += "\n\t\t"
 		}
 		s += v + " "
@@ -75,7 +78,6 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 	t.timer, cmd = t.timer.Update(msg)
 
 	switch msg := msg.(type) {
-
 	// handle when the window is resized
 	case tea.WindowSizeMsg:
 		h, _ := docStyle.GetFrameSize()
@@ -115,9 +117,8 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 }
 
 /*
-	Colorea el input de las palabras ya terminadas (una palabra se considera terminada cuando se preciona
-
-la tecla espacio)
+	Colorea el input de las palabras ya terminadas (una palabra se considera terminada cuando
+se preciona la tecla espacio)
 */
 func (t Typer) colorearOutput(i int) Typer {
 	// terminar el juego cuando se llega a la ultima palabra
@@ -139,9 +140,8 @@ func (t Typer) colorearOutput(i int) Typer {
 }
 
 /*
-	colorea la palabra que se esta escribiendo actualmente letra por letra dependiendo de lo que el usuario
-
-escribe
+	colorea la palabra que se esta escribiendo actualmente letra por letra dependiendo de
+lo que el usuario escribe
 */
 func (t Typer) colorearPalActual() {
 	text := t.textArea.Value()

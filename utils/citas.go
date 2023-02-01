@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -11,16 +12,18 @@ const url = "https://api.quotable.io/random?minLength=120"
 type Cuote struct {
 	Content string `json:"content"`
 	Author  string `json:"author"`
+	ID      string `json:"id"`
 	Length  int    `json:"length"`
 	Splited []string
 }
 
-// Retorna una nueva cita aleatoria de internet utilizando quotable
-func NuevaCita(s []string) (*Cuote, error) {
-	if s != nil {
-		return nuevaCitaLocal(s[0])
-	}
+type cuotes struct {
+	Content []Cuote `json:"cuotes"`
+}
 
+/* Dentro de S se envia el id de una cita contenidad localmente. Si el valor de s es nulo, entonces
+se genera una nueva cita de internet utilizando quotable. */
+func NuevaCitaOnline() ([]*Cuote, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -34,9 +37,25 @@ func NuevaCita(s []string) (*Cuote, error) {
 	}
 
 	body.Splited = strings.Split(body.Content, " ")
-	return &body, nil
+	return []*Cuote{&body}, nil
 }
 
-func nuevaCitaLocal(name string) (*Cuote, error) {
-	return &Cuote{Splited: []string{}, Content: ""}, nil
+// WARNING: CAMBIAR EL SISTEMA DE ARCHIVOS
+// Busca una cita local que contenga el ID proporcionado
+func GetCitasLocales(id string) ([]*Cuote, error) {
+	dir := "~/palabras.json"
+	file, err := os.Open(dir)
+	if err != nil {
+		panic("No se pudo encontrar el archivo de palabras locales " + dir)
+	}
+
+	var c cuotes
+	json.NewDecoder(file).Decode(&c)
+
+	for _, v := range c.Content {
+		if v.ID == id {
+            return []*Cuote{}, nil
+		}
+	}
+	panic("No se pudo encontrar la cita")
 }
