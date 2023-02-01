@@ -141,7 +141,7 @@ func (t Typer) colorearOutput() Typer {
 		t.coloredOutput[t.pos] = badStyle.Render(t.cita.Splited[t.pos])
 	}
 	t.textArea.Reset()
-	t.pos++
+	t.pos += 1
 	return t
 }
 
@@ -180,7 +180,7 @@ func (t Typer) colorearPalActual() {
 			s += badStyle.Render(string(rune(palActual[i])))
 		}
 	}
-	t.coloredOutput[t.pos] = s
+	// t.coloredOutput[t.pos] = s
 }
 
 // funcion para crear un nuevo text area (donde el usuario escribe)
