@@ -9,7 +9,7 @@ import (
 
 const url = "https://api.quotable.io/random?minLength=120"
 
-type Cuote struct {
+type Quote struct {
 	Content string `json:"content"`
 	Author  string `json:"author"`
 	ID      string `json:"id"`
@@ -18,19 +18,19 @@ type Cuote struct {
 }
 
 type cuotes struct {
-	Content []Cuote `json:"cuotes"`
+	Content []Quote `json:"cuotes"`
 }
 
 /* Dentro de S se envia el id de una cita contenidad localmente. Si el valor de s es nulo, entonces
 se genera una nueva cita de internet utilizando quotable. */
-func NuevaCitaOnline() (*Cuote, error) {
+func NuevaCitaOnline() (*Quote, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	var body Cuote
+	var body Quote
 	err = json.NewDecoder(res.Body).Decode(&body)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func NuevaCitaOnline() (*Cuote, error) {
 
 // WARNING: CAMBIAR EL SISTEMA DE ARCHIVOS
 // Busca una cita local que contenga el ID proporcionado
-func GetCitasLocales(id string) ([]*Cuote, error) {
+func GetCitasLocales(id string) ([]*Quote, error) {
 	dir := "~/palabras.json"
 	file, err := os.Open(dir)
 	if err != nil {
@@ -54,7 +54,7 @@ func GetCitasLocales(id string) ([]*Cuote, error) {
 
 	for _, v := range c.Content {
 		if v.ID == id {
-            return []*Cuote{}, nil
+            return []*Quote{}, nil
 		}
 	}
 	panic("No se pudo encontrar la cita")

@@ -12,7 +12,7 @@ import (
 
 // modelo basico del typer
 type Typer struct {
-	cita          *utils.Cuote
+	cita          *utils.Quote
 	timer         stopwatch.Model
 	textArea      textarea.Model
 	coloredOutput []string
@@ -28,11 +28,15 @@ Retorna una nueva instancia del Typer (juego de escribir).
 El "fraceId" corresponde al identificador de la cita local ("id"). Si el valor proporcionado es nulo, entonces se retorna un typer con
 una cita sacada de internet.
 */
-func NewTyper(width int, fraceId ...utils.Cuote) Typer {
+func NewTyper(width int, quote ...utils.Quote) Typer {
 	done := false
-	cita, err := utils.NuevaCitaOnline()
-	if err != nil {
-		done = true
+	var cita *utils.Quote
+	if quote == nil {
+		var err error
+		cita, err = utils.NuevaCitaOnline()
+		if err != nil {
+			done = true
+		}
 	}
 
 	// crear un array auxiliar con espacios en blanco
@@ -123,6 +127,7 @@ func (t Typer) Update(msg tea.Msg) (Typer, tea.Cmd) {
 
 /*
 	Colorea el input de las palabras ya terminadas (una palabra se considera terminada cuando
+
 se preciona la tecla espacio)
 */
 func (t Typer) colorearOutput() Typer {
@@ -147,6 +152,7 @@ func (t Typer) colorearOutput() Typer {
 
 /*
 	colorea la palabra que se esta escribiendo actualmente letra por letra dependiendo de
+
 lo que el usuario escribe
 */
 func (t Typer) colorearPalActual() {

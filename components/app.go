@@ -9,23 +9,26 @@ const (
 	menu = iota
 	inGame
 	resumen
+	local
 )
 
 type App struct {
-	Quit      bool
-	Mode      int
-	Menu      mainMenu
-	Game      Typer
-	appWith   int
-	appHeight int
+	Quit        bool
+	Mode        int
+	Menu        MainMenu
+	LocalQuotes QuotesMenu
+	Game        Typer
+	appWith     int
+	appHeight   int
 }
 
 func NewApp() App {
 	return App{
-		Quit: false,
-		Mode: menu,
-		Menu: NewMainMenu(),
-		Game: Typer{},
+		Quit:        false,
+		Mode:        menu,
+		Menu:        NewMainMenu(),
+		Game:        Typer{},
+		LocalQuotes: QuotesMenu{},
 	}
 }
 
@@ -62,6 +65,14 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a.selectMode()
 		}
 		return a, cmd
+
+	case local: // actualizar el menu
+		a.LocalQuotes, cmd = a.LocalQuotes.Update(msg)
+		// si desde el menu se selecciono algo
+		if a.LocalQuotes.Selected {
+			return a.selectLocalQuote()
+		}
+		return a, cmd
 	}
 	return a, cmd
 }
@@ -80,11 +91,13 @@ func (m App) View() string {
 	}
 }
 
-/* triggered when and option is selected in the main menu.
-Handles the App state and sets the correct mode */
+/*
+	triggered when and option is selected in the main menu.
+
+Handles the App state and sets the correct mode
+*/
 func (a App) selectMode() (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	// TODO: meter en funcion separada
 	a.Menu.Selected = false
 	// change game mode
 	switch a.Menu.List.SelectedItem().FilterValue() {
@@ -95,7 +108,6 @@ func (a App) selectMode() (tea.Model, tea.Cmd) {
 		return a, cmd
 
 	case "offline": // nuevo typer pero con el archivo local
-		// TODO: implementar los archivos locales
 		a.Mode = inGame
 		a.Game = NewTyper(a.appWith)
 		cmd = a.Game.Init()
@@ -104,5 +116,12 @@ func (a App) selectMode() (tea.Model, tea.Cmd) {
 	case "cargar":
 		return a, tea.Quit
 	}
+	return a, cmd
+}
+
+func (a App) selectLocalQuote() (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	a.LocalQuotes.Selected = false
+	a.Game = NewTyper(a.appWith, a.LocalQuotes.Selection)
 	return a, cmd
 }
